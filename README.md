@@ -2,6 +2,7 @@
 
 A cloud-hosted contact form built using Amazon S3, Amazon API Gateway, AWS Lambda, Amazon DynamoDB, and AWS SAM. The application demonstrates how a static frontend can communicate with a serverless backend to validate and store contact form submissions.
 
+## URL :   http://cloud-contact-form-frontendbucket-yjb5kcx40aly.s3-website-ap-southeast-2.amazonaws.com/
 ## Project Overview
 
 The Cloud Contact Form is a beginner-level AWS Cloud Engineer internship project. It demonstrates static website hosting, API integration, serverless computing, database storage, input validation, and cloud deployment.
@@ -184,6 +185,17 @@ The following checks should be completed and recorded before submission.
 | Submit a valid request | Record appears in DynamoDB |
 | Test an API failure | Useful error message |
 | Send a browser request | CORS permits the configured website origin |
+
+## outputs 
+
+<img width="602" height="861" alt="Screenshot 2026-10-20 193501" src="https://github.com/user-attachments/assets/29170c23-ca0b-4358-bd00-4b5410f7194b" />
+
+<img width="558" height="205" alt="Screenshot 2026-10-20 193534" src="https://github.com/user-attachments/assets/c44570ce-8841-4f48-9e5e-69fbd248feaf" />
+
+
+<img width="1095" height="388" alt="Screenshot 2026-10-20 193559" src="https://github.com/user-attachments/assets/a58e20ec-f6b1-40c9-a98e-ecae8c50e158" />
+
+
 
 ## Security Considerations
 
