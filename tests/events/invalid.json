@@ -1,0 +1,9 @@
+{
+  "body": "{\"name\":\"x\",\"email\":\"not-an-email\",\"message\":\"no\"}",
+  "requestContext": {
+    "http": {
+      "method": "POST",
+      "sourceIp": "127.0.0.1"
+    }
+  }
+}

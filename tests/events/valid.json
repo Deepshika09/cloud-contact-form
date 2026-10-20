@@ -1,0 +1,9 @@
+{
+  "body": "{\"name\":\"Ada Lovelace\",\"email\":\"ada@example.com\",\"message\":\"I would like to join the cloud internship.\"}",
+  "requestContext": {
+    "http": {
+      "method": "POST",
+      "sourceIp": "127.0.0.1"
+    }
+  }
+}

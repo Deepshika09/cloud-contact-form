@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Send a message with the Cloud Contact Form." />
+    <title>Cloud Contact Form</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <main class="panel" aria-labelledby="form-title">
+        <h1 id="form-title">Contact form</h1>
+        <p class="panel-copy">All fields are required.</p>
+
+        <div id="banner" class="banner" role="status" aria-live="polite" hidden></div>
+
+        <form id="form" novalidate>
+          <div class="field">
+            <label for="name">Full name</label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              autocomplete="name"
+              maxlength="80"
+              required
+              placeholder="Ada Lovelace"
+            />
+            <p class="hint" id="name-hint">2–80 characters. Letters, spaces, hyphens, apostrophes.</p>
+            <p class="error" id="name-error" hidden></p>
+          </div>
+
+          <div class="field">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              maxlength="254"
+              required
+              placeholder="ada@example.com"
+            />
+            <p class="hint" id="email-hint">We use this only to reply.</p>
+            <p class="error" id="email-error" hidden></p>
+          </div>
+
+          <div class="field">
+            <label for="message">Message</label>
+            <textarea
+              id="message"
+              name="message"
+              maxlength="2000"
+              required
+              rows="6"
+              placeholder="What should we know?"
+            ></textarea>
+            <div class="meta-row">
+              <p class="hint" id="message-hint">10–2000 characters.</p>
+              <p class="counter" id="counter" aria-live="polite">0 / 2000</p>
+            </div>
+            <p class="error" id="message-error" hidden></p>
+          </div>
+
+          <button type="submit" id="submit">
+            <span class="btn-label">Send message</span>
+            <span class="btn-spinner" aria-hidden="true"></span>
+          </button>
+        </form>
+      </main>
+    </div>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

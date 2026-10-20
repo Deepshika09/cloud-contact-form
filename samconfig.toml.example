@@ -1,0 +1,12 @@
+# Copy to samconfig.toml after `sam deploy --guided` or fill in by hand.
+# Never put access keys in this file.
+
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "cloud-contact-form"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "AllowedOrigin=* MessageTtlDays=90 LogRetentionDays=7"
+image_repositories = []

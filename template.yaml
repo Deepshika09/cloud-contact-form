@@ -1,0 +1,193 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Cloud Contact Form — beginner internship project.
+  Static S3 site + HTTP API + Python Lambda + DynamoDB + CloudWatch.
+  Designed for the AWS Free Tier / low cost: ARM Lambda, 128 MB, 5s timeout,
+  on-demand DynamoDB with TTL, 7-day log retention, no NAT/VPC/CloudFront.
+
+Parameters:
+  AllowedOrigin:
+    Type: String
+    Default: "*"
+    Description: >
+      Browser origin allowed by CORS (example: https://bucket.s3-website-us-east-1.amazonaws.com).
+      Use * only for first deploy; then set this to the S3 website URL and redeploy.
+    AllowedPattern: "^(\\*|(https?://).+)$"
+
+  MessageTtlDays:
+    Type: Number
+    Default: 90
+    MinValue: 1
+    MaxValue: 365
+    Description: DynamoDB items expire after this many days (TTL) to control storage cost.
+
+  LogRetentionDays:
+    Type: Number
+    Default: 7
+    AllowedValues: [1, 3, 5, 7, 14, 30]
+    Description: CloudWatch log retention. Shorter = cheaper.
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures:
+      - arm64
+    Timeout: 5
+    MemorySize: 128
+    Tracing: PassThrough
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Cost and security
+        Parameters:
+          - AllowedOrigin
+          - MessageTtlDays
+          - LogRetentionDays
+
+Resources:
+  ContactTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      TableName: !Sub "${AWS::StackName}-messages"
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: false
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Project
+          Value: cloud-contact-form
+        - Key: CostCenter
+          Value: internship
+
+  ContactFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-submit"
+      CodeUri: src/
+      Handler: handler.lambda_handler
+      Description: Validates and stores contact-form submissions.
+      Environment:
+        Variables:
+          CONTACT_TABLE: !Ref ContactTable
+          ALLOWED_ORIGIN: !Ref AllowedOrigin
+          MESSAGE_TTL_DAYS: !Ref MessageTtlDays
+      ReservedConcurrentExecutions: 5
+      Events:
+        Submit:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ContactApi
+            Path: /contact
+            Method: POST
+        Preflight:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ContactApi
+            Path: /contact
+            Method: OPTIONS
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Sid: PutContactItemsOnly
+              Effect: Allow
+              Action:
+                - dynamodb:PutItem
+              Resource: !GetAtt ContactTable.Arn
+      Tags:
+        Project: cloud-contact-form
+
+  ContactFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ContactFunction}"
+      RetentionInDays: !Ref LogRetentionDays
+
+  ContactApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: prod
+      Description: HTTP API for the Cloud Contact Form (cheaper than REST API).
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref AllowedOrigin
+        AllowMethods:
+          - POST
+          - OPTIONS
+        AllowHeaders:
+          - content-type
+        MaxAge: 600
+      AccessLogSettings:
+        DestinationArn: !GetAtt ContactApiAccessLogs.Arn
+        Format: '$context.requestId'
+  ContactApiAccessLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/apigateway/${AWS::StackName}"
+      RetentionInDays: !Ref LogRetentionDays
+
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: false
+        RestrictPublicBuckets: false
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      Tags:
+        - Key: Project
+          Value: cloud-contact-form
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: PublicReadForWebsite
+            Effect: Allow
+            Principal: "*"
+            Action: s3:GetObject
+            Resource: !Sub "${FrontendBucket.Arn}/*"
+
+Outputs:
+  ApiEndpoint:
+    Description: POST JSON to this URL from the frontend (append /contact).
+    Value: !Sub "https://${ContactApi}.execute-api.${AWS::Region}.amazonaws.com/prod/contact"
+  WebsiteURL:
+    Description: S3 website URL for the contact form.
+    Value: !GetAtt FrontendBucket.WebsiteURL
+  BucketName:
+    Description: Upload frontend files here (aws s3 sync frontend s3://...).
+    Value: !Ref FrontendBucket
+  TableName:
+    Description: DynamoDB table storing submissions (TTL enabled).
+    Value: !Ref ContactTable
+  FunctionName:
+    Description: Lambda function name (CloudWatch logs under /aws/lambda/...).
+    Value: !Ref ContactFunction
+  StackRegion:
+    Value: !Ref AWS::Region
